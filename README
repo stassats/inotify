@@ -1,0 +1,16 @@
+Example:
+
+(with-inotify (inot `((,(user-homedir-pathname) ,in-create)))
+  (read-event inot))
+  
+blocks
+
+ $ touch ~/file
+
+ =>
+ #S(EVENT
+   :WATCH #<WATCH pathname: "/home/stas/" mask: 256>
+   :MASK 256
+   :COOKIE 0
+   :NAME "file")
+ 

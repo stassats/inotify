@@ -53,7 +53,7 @@
 
 (defmethod print-object ((watch watch) stream)
   (print-unreadable-object (watch stream :type t)
-    (format stream "pathname: ~a mask: ~a"
+    (format stream "pathname: ~s mask: ~a"
             (watch-pathname watch)
             (watch-mask watch))))
 
