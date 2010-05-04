@@ -60,7 +60,7 @@
 (defun add-watch (inotify pathname mask)
   (let* ((pathname (namestring pathname))
          (watch (make-watch :inotify inotify
-                            :pathname pathname
+                            :pathname (parse-namestring pathname)
                             :id (inotify-add-watch (inotify-fd inotify)
                                                    pathname
                                                    mask)
@@ -80,14 +80,12 @@
 (defun event-full-name (event)
   (if (event-name event)
       (merge-pathnames (event-name event)
-                       (make-pathname :directory (watch-pathname (event-watch event))))
+                       (watch-pathname (event-watch event)))
       (watch-pathname (event-watch event))))
 
 (defun read-event (inotify)
   (let ((buffer (inotify-buffer inotify)))
-    (c-read (inotify-fd inotify)
-            buffer
-            event-size)
+    (assert (plusp (c-read (inotify-fd inotify) buffer event-size)))
     (with-foreign-slots ((watch mask cookie name-length)
                          buffer inotify-event)
       (let ((event (make-event :watch (find-watch inotify watch)
