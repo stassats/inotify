@@ -37,9 +37,5 @@
 (constant (in-oneshot "IN_ONESHOT") :documentation "Only send event once.")
 (constant (in-all-events "IN_ALL_EVENTS"))
 
-
-(ctype size-t "size_t")
-(ctype ssize-t "ssize_t")
-
 (define "EVENT_SIZE" "(sizeof(struct inotify_event) + NAME_MAX + 1)")
 (constant (event-size "EVENT_SIZE"))
