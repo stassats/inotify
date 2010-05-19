@@ -5,21 +5,21 @@
 
 (in-package #:inotify)
 
-(iolib.syscalls:defsyscall (inotify-init "inotify_init")
+(isys:defsyscall "inotify_init"
     :int)
 
-(iolib.syscalls:defsyscall (inotify-add-watch "inotify_add_watch")
+(isys:defsyscall "inotify_add_watch"
     :int
   (fd :int)
   (path :string)
   (flags :uint32))
 
-(iolib.syscalls:defsyscall (inotify-rm-watch "inotify_rm_watch")
+(isys:defsyscall "inotify_rm_watch"
     :int
   (fd :int)
   (watch-descritor :uint32))
 
-(defcstruct (inotify-event) 
+(defcstruct inotify-event
   (watch :int)
   (mask :uint32)
   (cookie :uint32)
@@ -37,8 +37,8 @@
    :buffer (foreign-alloc :char :count event-size)))
 
 (defun close-inotify (inotify)
-  (iolib.syscalls:close (inotify-fd inotify))
-  (foreign-free (inotify-buffer inotify) )
+  (isys:close (inotify-fd inotify))
+  (foreign-free (inotify-buffer inotify))
   (setf (inotify-buffer inotify) nil))
 
 (defstruct watch
@@ -81,8 +81,8 @@
 
 (defun read-event (inotify)
   (let ((buffer (inotify-buffer inotify)))
-    (iolib.syscalls:repeat-upon-eintr
-      (iolib.syscalls:read (inotify-fd inotify) buffer event-size))
+    (isys:repeat-upon-eintr
+      (isys:read (inotify-fd inotify) buffer event-size))
     (with-foreign-slots ((watch mask cookie name-length)
                          buffer inotify-event)
       (let ((event (make-event :watch (find-watch inotify watch)
@@ -105,4 +105,3 @@
   `(let ((,name (make-inotify-with-watches ,paths-with-masks)))
      (unwind-protect (progn ,@body)
        (close-inotify ,name))))
-

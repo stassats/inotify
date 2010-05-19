@@ -1,4 +1,4 @@
-#-linux (error "inotify(7) is present only on Linux.")
+#-linux #.(error "inotify(7) is present only on Linux.")
 
 (include "sys/inotify.h" "limits.h")
 
