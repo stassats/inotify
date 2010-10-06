@@ -17,7 +17,7 @@
 (isys:defsyscall "inotify_rm_watch"
     :int
   (fd :int)
-  (watch-descritor :uint32))
+  (watch-descriptor :uint32))
 
 (defcstruct inotify-event
   (watch :int)
