@@ -34,7 +34,7 @@
 (defun make-inotify ()
   (%make-inotify
    :fd (inotify-init)
-   :buffer (foreign-alloc :char :count event-size)))
+   :buffer (foreign-alloc :char :count +event-size+)))
 
 (defun close-inotify (inotify)
   (isys:close (inotify-fd inotify))
@@ -82,7 +82,7 @@
 (defun read-event (inotify)
   (let ((buffer (inotify-buffer inotify)))
     (isys:repeat-upon-eintr
-      (isys:read (inotify-fd inotify) buffer event-size))
+      (isys:read (inotify-fd inotify) buffer +event-size+))
     (with-foreign-slots ((watch mask cookie name-length)
                          buffer inotify-event)
       (let ((event (make-event :watch (find-watch inotify watch)

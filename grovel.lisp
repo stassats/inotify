@@ -38,4 +38,4 @@
 (constant (in-all-events "IN_ALL_EVENTS"))
 
 (define "EVENT_SIZE" "(sizeof(struct inotify_event) + NAME_MAX + 1)")
-(constant (event-size "EVENT_SIZE"))
+(constant (+event-size+ "EVENT_SIZE"))
