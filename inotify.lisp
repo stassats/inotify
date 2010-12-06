@@ -28,13 +28,16 @@
 
 (defstruct (inotify (:constructor %make-inotify))
   fd
+  buffer-size
   buffer
   watches)
 
-(defun make-inotify ()
-  (%make-inotify
-   :fd (inotify-init)
-   :buffer (foreign-alloc :char :count +event-size+)))
+(defun make-inotify (&optional (buffer-count 100))
+  (let ((buffer-size (* +event-max-size+ buffer-count)))
+    (%make-inotify
+     :fd (inotify-init)
+     :buffer-size buffer-size
+     :buffer (foreign-alloc :char :count buffer-size))))
 
 (defun close-inotify (inotify)
   (isys:close (inotify-fd inotify))
@@ -79,21 +82,33 @@
                        (watch-pathname (event-watch event)))
       (watch-pathname (event-watch event))))
 
-(defun read-event (inotify)
-  (let ((buffer (inotify-buffer inotify)))
-    (isys:repeat-upon-eintr
-      (isys:read (inotify-fd inotify) buffer +event-size+))
-    (with-foreign-slots ((watch mask cookie name-length)
-                         buffer inotify-event)
-      (let ((event (make-event :watch (find-watch inotify watch)
-                               :mask mask
-                               :cookie cookie)))
-        (unless (zerop name-length)
-          (setf (event-name event)
-                (foreign-string-to-lisp
-                 (foreign-slot-pointer buffer 'inotify-event 'name)
-                 :max-chars name-length)))
-        event))))
+(defun read-event (inotify buffer)
+  (with-foreign-slots ((watch mask cookie name-length)
+                       buffer inotify-event)
+    (let ((event (make-event :watch (find-watch inotify watch)
+                             :mask mask
+                             :cookie cookie)))
+      (unless (zerop name-length)
+        (setf (event-name event)
+              (foreign-string-to-lisp
+               (foreign-slot-pointer buffer 'inotify-event 'name)
+               :max-chars name-length)))
+      (values event
+              (+ +event-size+ name-length)))))
+
+(defun read-events (inotify)
+  (let* ((buffer (inotify-buffer inotify))
+	 (bytes-read
+	  (isys:repeat-upon-eintr
+	    (isys:read (inotify-fd inotify) 
+		       buffer
+		       (inotify-buffer-size inotify)))))
+    (loop with event and event-length
+          for offset = 0 then (+ offset event-length)
+          while (< offset bytes-read)
+          do (setf (values event event-length)
+                   (read-event inotify buffer))
+          collect event)))
 
 (defun make-inotify-with-watches (path-with-masks)
   (let ((inotify (make-inotify)))

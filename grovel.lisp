@@ -37,5 +37,8 @@
 (constant (in-oneshot "IN_ONESHOT") :documentation "Only send event once.")
 (constant (in-all-events "IN_ALL_EVENTS"))
 
-(define "EVENT_SIZE" "(sizeof(struct inotify_event) + NAME_MAX + 1)")
+(define "EVENT_SIZE" "(sizeof(struct inotify_event))")
 (constant (+event-size+ "EVENT_SIZE"))
+
+(define "EVENT_MAX_SIZE" "(EVENT_SIZE + NAME_MAX + 1)")
+(constant (+event-max-size+ "EVENT_MAX_SIZE"))

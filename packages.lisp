@@ -18,7 +18,7 @@
    #:inotify
    #:inotify-watches
 
-   #:read-event
+   #:read-events
    #:event
    #:event-name
    #:event-mask
