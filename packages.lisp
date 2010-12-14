@@ -9,6 +9,7 @@
    #:close-inotify
 
    #:add-watch
+   #:remove-watch
    #:watch
    #:watch
    #:watch-pathname
@@ -50,4 +51,5 @@
    #:in-mask-add
    #:in-isdir
    #:in-oneshot
-   #:in-all-events))
+   #:in-all-events
+   #:find-watch))
