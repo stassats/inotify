@@ -27,10 +27,10 @@
   (name :char))
 
 (defstruct (inotify (:constructor %make-inotify))
-  fd
+  (fd nil)
   buffer-size
   buffer
-  watches)
+  (watches nil))
 
 (defun make-inotify (&optional (buffer-count 100))
   (let ((buffer-size (* +event-max-size+ buffer-count)))
@@ -40,9 +40,12 @@
      :buffer (foreign-alloc :char :count buffer-size))))
 
 (defun close-inotify (inotify)
-  (isys:close (inotify-fd inotify))
-  (foreign-free (inotify-buffer inotify))
-  (setf (inotify-buffer inotify) nil))
+  (unless (null-pointer-p (inotify-buffer inotify))
+    (foreign-free (inotify-buffer inotify))
+    (setf (inotify-buffer inotify) (null-pointer)))
+  (when (inotify-fd inotify)
+    (unwind-protect (isys:close (inotify-fd inotify))
+      (setf (inotify-fd inotify) nil))))
 
 (defstruct watch
   id
@@ -67,8 +70,34 @@
     (push watch (inotify-watches inotify))
     watch))
 
-(defun find-watch (inotify id)
+(defgeneric find-watch (inotify id))
+
+(defmethod find-watch (inotify (id integer))
   (find id (inotify-watches inotify) :key #'watch-id))
+
+(defmethod find-watch (inotify (pathname pathname))
+  (find pathname (inotify-watches inotify)
+	:key #'watch-pathname
+	:test #'equal))
+
+(defmethod find-watch (inotify (pathname string))
+  (find-watch inotify (parse-namestring pathname)))
+
+(defgeneric remove-watch (intofy watch))
+
+(defmethod remove-watch (inotify id)
+  (let ((watch (find-watch inotify id)))
+    (if watch
+        (remove-watch inotify watch)
+        (error "no watch with id ~a was found in ~a"
+               id inotify))))
+
+(defmethod remove-watch (inotify (watch watch))
+  (unless (eql (watch-inotify watch) inotify)
+    (error "~a is not from ~a" watch inotify))
+  (setf (inotify-watches inotify)
+        (remove watch (inotify-watches inotify)))
+  (inotify-rm-watch (inotify-fd inotify) (watch-id watch)))
 
 (defstruct event
   watch
@@ -110,9 +139,9 @@
                    (read-event inotify buffer))
           collect event)))
 
-(defun make-inotify-with-watches (path-with-masks)
+(defun make-inotify-with-watches (paths-with-masks)
   (let ((inotify (make-inotify)))
-    (loop for (path mask) in path-with-masks
+    (loop for (path mask) in paths-with-masks
           do (add-watch inotify path mask))
     inotify))
 
