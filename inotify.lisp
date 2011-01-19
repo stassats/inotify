@@ -105,9 +105,17 @@
   cookie
   name)
 
+(defun parse-event-name (event)
+  (let* ((name (event-name event))
+         (dot (position #\. name :from-end t)))
+    (if dot
+        (make-pathname :name (subseq name 0 dot)
+                       :type (subseq name (1+ dot)))
+        (make-pathname :name name))))
+
 (defun event-full-name (event)
   (if (event-name event)
-      (merge-pathnames (event-name event)
+      (merge-pathnames (parse-event-name event)
                        (watch-pathname (event-watch event)))
       (watch-pathname (event-watch event))))
 
