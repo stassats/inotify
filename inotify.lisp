@@ -5,16 +5,16 @@
 
 (in-package #:inotify)
 
-(isys:defsyscall inotify-init
+(isys:defsyscall (inotify-init "inotify_init")
     :int)
 
-(isys:defsyscall inotify-add-watch
+(isys:defsyscall (inotify-add-watch "inotify_add_watch")
     :int
   (fd :int)
   (path :string)
   (flags :uint32))
 
-(isys:defsyscall inotify-rm-watch
+(isys:defsyscall (inotify-rm-watch "inotify_rm_watch")
     :int
   (fd :int)
   (watch-descriptor :uint32))
