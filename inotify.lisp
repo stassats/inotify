@@ -136,15 +136,15 @@
 (defun read-events (inotify)
   (let* ((buffer (inotify-buffer inotify))
 	 (bytes-read
-	  (isys:repeat-upon-eintr
-	    (isys:read (inotify-fd inotify) 
-		       buffer
-		       (inotify-buffer-size inotify)))))
+           (isys:repeat-upon-eintr
+             (isys:read (inotify-fd inotify) 
+                        buffer
+                        (inotify-buffer-size inotify)))))
     (loop with event and event-length
           for offset = 0 then (+ offset event-length)
           while (< offset bytes-read)
           do (setf (values event event-length)
-                   (read-event inotify buffer))
+                   (read-event inotify (inc-pointer buffer offset)))
           collect event)))
 
 (defun make-inotify-with-watches (paths-with-masks)
