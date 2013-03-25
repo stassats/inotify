@@ -121,14 +121,14 @@
 
 (defun read-event (inotify buffer)
   (with-foreign-slots ((watch mask cookie name-length)
-                       buffer inotify-event)
+                       buffer (:struct inotify-event))
     (let ((event (make-event :watch (find-watch inotify watch)
                              :mask mask
                              :cookie cookie)))
       (unless (zerop name-length)
         (setf (event-name event)
               (foreign-string-to-lisp
-               (foreign-slot-pointer buffer 'inotify-event 'name)
+               (foreign-slot-pointer buffer '(:struct inotify-event) 'name)
                :max-chars name-length)))
       (values event
               (+ +event-size+ name-length)))))

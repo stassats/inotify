@@ -5,6 +5,8 @@
 
 (asdf:defsystem #:inotify
   :depends-on (cffi iolib)
+  :license "Public Domain"
+  :description "Interface to linux inotify(7)"
   :serial t
   :components ((:file "packages")
                (cffi-grovel:grovel-file "grovel")
