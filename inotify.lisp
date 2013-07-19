@@ -133,19 +133,20 @@
       (values event
               (+ +event-size+ name-length)))))
 
-(defun read-events (inotify)
-  (let* ((buffer (inotify-buffer inotify))
-	 (bytes-read
-           (isys:repeat-upon-eintr
-             (isys:read (inotify-fd inotify) 
-                        buffer
-                        (inotify-buffer-size inotify)))))
-    (loop with event and event-length
-          for offset = 0 then (+ offset event-length)
-          while (< offset bytes-read)
-          do (setf (values event event-length)
-                   (read-event inotify (inc-pointer buffer offset)))
-          collect event)))
+(defun read-events (inotify &key time-out)
+  (when (iomux:wait-until-fd-ready (inotify-fd inotify) :input time-out)
+    (let* ((buffer (inotify-buffer inotify))
+           (bytes-read
+             (isys:repeat-upon-eintr
+               (isys:read (inotify-fd inotify) 
+                          buffer
+                          (inotify-buffer-size inotify)))))
+      (loop with event and event-length
+            for offset = 0 then (+ offset event-length)
+            while (< offset bytes-read)
+            do (setf (values event event-length)
+                     (read-event inotify (inc-pointer buffer offset)))
+            collect event))))
 
 (defun make-inotify-with-watches (paths-with-masks)
   (let ((inotify (make-inotify)))

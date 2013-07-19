@@ -1,5 +1,3 @@
-Example:
-
 (with-inotify (inot `((,(user-homedir-pathname) ,in-create)))
   (read-events inot))
   
@@ -14,3 +12,21 @@ blocks
     :COOKIE 0
     :NAME "file"))
  
+With a timeout:
+
+(inotify:with-inotify (inotify `(("/tmp/test" ,inotify:in-modify)))
+  (loop for events = (inotify:read-events inotify :time-out 1)
+        thereis events
+        do (write-line "timed out")))
+timed out
+timed out
+timed out
+
+$ echo 10 >> /tmp/test
+
+ =>
+(#S(INOTIFY:EVENT
+    :WATCH #<INOTIFY:WATCH pathname: #P"/tmp/test" mask: 2>
+    :MASK 2
+    :COOKIE 0
+    :NAME NIL))
