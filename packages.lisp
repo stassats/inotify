@@ -52,4 +52,5 @@
    #:in-isdir
    #:in-oneshot
    #:in-all-events
-   #:find-watch))
+   #:find-watch
+   #:mask-to-names))

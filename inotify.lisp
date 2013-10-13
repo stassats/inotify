@@ -47,6 +47,21 @@
     (unwind-protect (isys:close (inotify-fd inotify))
       (setf (inotify-fd inotify) nil))))
 
+(defvar *masks*
+  (loop for name in
+        '(in-access in-attrib in-close-nowrite in-close-write in-create
+          in-delete in-delete-self in-dont-follow in-ignored in-isdir
+          in-mask-add in-modify in-move-self in-moved-from in-moved-to
+          in-oneshot in-onlydir in-open in-q-overflow in-unmount)
+        collect (cons (symbol-value name) name)))
+
+(defun mask-to-names (mask)
+  (if (= mask in-all-events)
+      '(in-all-events)
+      (loop for (value . name) in *masks*
+            when (logtest value mask)
+            collect name)))
+
 (defstruct watch
   id
   inotify
@@ -57,7 +72,7 @@
   (print-unreadable-object (watch stream :type t)
     (format stream "pathname: ~s mask: ~a"
             (watch-pathname watch)
-            (watch-mask watch))))
+            (mask-to-names (watch-mask watch)))))
 
 (defun add-watch (inotify pathname mask)
   (let* ((pathname (namestring pathname))
@@ -105,6 +120,12 @@
   cookie
   name)
 
+(defmethod print-object ((event event) stream)
+  (let ((copy (copy-event event)))
+    (setf (event-mask copy)
+          (mask-to-names (event-mask copy)))
+    (call-next-method copy stream)))
+
 (defun parse-event-name (event)
   (let* ((name (event-name event))
          (dot (position #\. name :from-end t)))
@@ -150,8 +171,11 @@
 
 (defun make-inotify-with-watches (paths-with-masks)
   (let ((inotify (make-inotify)))
-    (loop for (path mask) in paths-with-masks
-          do (add-watch inotify path mask))
+    (loop for path-and-mask in paths-with-masks
+          ;; LOOP destructuring doesn't check the number of destructured arguments
+          do
+          (destructuring-bind (path mask) path-and-mask
+            (add-watch inotify path mask)))
     inotify))
 
 (defmacro with-inotify ((name paths-with-masks) &body body)
